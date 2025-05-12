@@ -1,0 +1,138 @@
+---
+title: "fp_step2_100"
+author: "Zeyu Hou"
+date: "2025-05-11"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+```{r,warning=FALSE,include=FALSE}
+library(dplyr)
+library(corrplot)
+library(ggplot2)
+library(e1071)
+data <- read.csv("C:/Users/zeyul/Desktop/Files/text book/pstat 100/student_depression_dataset.csv")
+```
+
+# Data Cleaning:
+```{r}
+summary(data)
+colSums(is.na(data))
+```
+since no na, no need for data cleaning :)
+
+# Visualization:
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Distribution of Age
+p1<-ggplot(data, aes(x = Age)) +
+  geom_histogram(bins = 30, fill = '#F0A20B', color = 'black') +
+  ggtitle('Distribution of Age')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Distribution of CGPA
+p2<-ggplot(data, aes(x = CGPA)) +
+  geom_histogram(bins = 30, fill = '#E9A9E8', color = '#898989') +
+  ggtitle('Distribution of CGPA')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# CGPA vs Academic Pressure
+data <- data %>%
+  mutate(CGPA_Category = case_when(
+    CGPA < 6.0 ~ "Low",
+    CGPA >= 6.0 & CGPA < 8.0 ~ "Mid",
+    CGPA >= 8.0 ~ "High"
+  ))
+
+p3<-ggplot(data, aes(x = factor(data$Academic.Pressure, levels = c("0","1", "2", "3", "4", "5")), fill = CGPA_Category)) +
+  geom_bar(position = "fill") +
+  ggtitle('Proportion of CGPA Levels by Academic Pressure Level') +
+  xlab('Academic Pressure Level') +
+  ylab('Proportion') +
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Correlation Matrix
+numeric_cols <- sapply(data, is.numeric)
+cor_matrix <- cor(data[, numeric_cols], use = 'complete.obs')
+corrplot(cor_matrix, method = 'circle', type = 'upper')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Depression by Degree
+p5<-ggplot(data, aes(x = Degree, fill = factor(Depression))) +
+  geom_bar(position = 'fill') +
+  ggtitle('Depression by Degree') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Family History of Mental Illness vs Depression
+p6<-ggplot(data, aes(x = 'Family History of Mental Illness', fill = factor(Depression))) +
+  geom_bar(position = 'fill') +
+  ggtitle('Depression by Family History of Mental Illness')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Proportion of Suicidal Thoughts by City
+data$Have.you.ever.had.suicidal.thoughts.. <- as.factor(data$Have.you.ever.had.suicidal.thoughts..)
+p7<-ggplot(data, aes(x = City, fill = data$Have.you.ever.had.suicidal.thoughts..)) +
+  geom_bar(position = 'fill') +
+  ggtitle('Proportion of Suicidal Thoughts by City') +
+  scale_fill_manual(values = c("No" = "#E6D617", "Yes" = "#AE58EB")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Depression vs Acdemic Pressure
+p8<-ggplot(data, aes(x = factor('Academic Pressure'), fill = factor(Depression))) +
+  geom_bar(position = 'fill') +
+  ggtitle('Proportion of Depression by Academic Pressure') +
+  xlab('Academic Pressure') +
+  ylab('Proportion')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Distribution Comparisons - Study Satisfaction by Gender
+p9<-ggplot(data, aes(x = Study.Satisfaction, fill = Gender)) +
+  geom_histogram(bins = 30, position = 'dodge') +
+  ggtitle('Study Satisfaction by Gender')
+```
+
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+# Distribution of Age
+p1
+# Distribution of CGPA
+p2
+# CGPA vs Academic Pressure
+p3
+# Correlation Matrix
+numeric_cols <- sapply(data, is.numeric)
+cor_matrix <- cor(data[, numeric_cols], use = 'complete.obs')
+corrplot(cor_matrix, method = 'circle', type = 'upper')
+# Depression by Degree
+p5
+# Family History of Mental Illness vs Depression
+p6
+# Proportion of Suicidal Thoughts by City
+p7
+# Depression vs Acdemic Pressure
+p8
+# Distribution Comparisons - Study Satisfaction by Gender
+p9
+# Skewness and Kurtosis
+age_skewness <- skewness(data$Age, na.rm = TRUE)
+age_kurtosis <- kurtosis(data$Age, na.rm = TRUE)
+cgpa_skewness <- skewness(data$CGPA, na.rm = TRUE)
+cgpa_kurtosis <- kurtosis(data$CGPA, na.rm = TRUE)
+age_skewness
+age_kurtosis
+cgpa_skewness
+cgpa_kurtosis
+```
