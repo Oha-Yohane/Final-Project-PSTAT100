@@ -1,0 +1,277 @@
+---
+title: 'Final Project - Step 2 (15 Points)'
+subtitle: "PSTAT100: Data Science Concepts and Analysis" 
+
+author:
+    affiliations:
+      - name: "Spring 2025"
+affiliation-title: "Quarter"
+format: 
+ pdf: 
+    latex_engine: xelatex
+    geometry: "letterpaper, margin=0.3in"
+    code-fold: true
+    code-line-numbers: true
+    code-copy: true
+    code-tools: true
+    self-contained: true
+    toc: false
+    toc-location: left
+    number-sections: true
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message =  FALSE)
+knitr::opts_chunk$set(warning =  FALSE)
+knitr::opts_chunk$set(error =  FALSE)
+bfcolor <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{\\textbf{%s}}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'><b>%s</b></span>", color, x)
+  } else x
+}
+```
+
+
+
+:::callout
+<div style="text-align: center">
+<span style="color: blue;"> **STUDENT NAME **</span> 
+</div>
+- Emma Toney (6196547)
+- Lucas Hou (7267602)
+- Khin Di (A293A07)
+- Katterin Galindo ( 3370442)
+- Giancarlo Arboleda (5528310)
+:::
+
+
+::: {.callout-caution}
+## Due Date
+The deadline for this step is **Friday, May 9, 2025**.
+:::
+
+
+:::{.callout-tip}
+# Instructions
+In this step, you will develop clear research questions and hypotheses based on your selected dataset, and conduct a thorough Exploratory Data Analysis (EDA). This foundational work is crucial for guiding your analysis in the following steps.
+
+:::
+
+# Step 2: Research Questions, Hypotheses, and Exploratory Data Analysis (EDA)
+
+
+## Research Questions
+
+**Question 1**
+
+1. Do professional degree programs correlate with higher depression rates than humanities degrees?
+
+**Question 2**
+
+2. Does family mental health history predict depression likelihood even when controlling for academic performance?
+
+**Question 3**
+
+3. Are academic pressure thresholds associated with increased suicidal ideation?
+
+
+## Hypotheses
+
+**Hypothesis 1**
+
+1. Students in professional degree programs have higher depression rates than students in
+humanities degrees.
+
+**Hypothesis 2**
+
+2. Students with familial mental illness will exhibit higher depression rates than those without familial mental illness, which will be persistent across all CGPA quartiles.
+
+**Hypothesis 3**
+
+3. Students experiencing higher academic pressure will demonstrate higher suicidal ideation rates than the peers with lower academic pressure.
+
+## Exploratory Data Analysis (EDA)
+
+
+```{r,warning=FALSE,include=FALSE}
+library(readr)
+library(dplyr)
+library(corrplot)
+library(ggplot2)
+library(e1071)
+library(knitr)
+data <- read_csv("C:/Users/zeyul/Desktop/Files/text book/pstat 100/student_depression_dataset.csv")
+```
+
+## Data Cleaning
+
+```{r}
+colSums(is.na(data))
+```
+
+Since our data has no "NA" values we have no need for data cleaning. 
+
+## Descriptive Statistics
+
+```{r}
+summary(data)
+```
+
+
+## Data Visualization
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Distribution of Age
+p1<-ggplot(data, aes(x = Age)) +
+  geom_histogram(bins = 30, fill = '#F0A20B', color = 'black') +
+  ggtitle('Distribution of Age')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Distribution of CGPA
+p2<-ggplot(data, aes(x = CGPA)) +
+  geom_histogram(bins = 30, fill = '#E9A9E8', color = '#898989') +
+  ggtitle('Distribution of CGPA')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# CGPA vs Academic Pressure
+data <- data %>%
+  mutate(CGPA_Category = case_when(
+    CGPA < 6.0 ~ "Low",
+    CGPA >= 6.0 & CGPA < 8.0 ~ "Mid",
+    CGPA >= 8.0 ~ "High"
+  ))
+
+p3 <- ggplot(data, aes(x = factor(data$`Academic Pressure`, levels = c("0","1", "2", "3", "4", "5")), fill = CGPA_Category)) +
+  geom_bar(position = "fill") +
+  ggtitle('Proportion of CGPA Levels by Academic Pressure Level') +
+  xlab('Academic Pressure Level') +
+  ylab('Proportion') +
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Correlation Matrix
+numeric_cols <- sapply(data, is.numeric)
+cor_matrix <- cor(data[, numeric_cols], use = 'complete.obs')
+corrplot(cor_matrix, method = 'circle', type = 'upper')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Depression by Degree
+p5<-ggplot(data, aes(x = Degree, fill = factor(Depression))) +
+  geom_bar(position = 'fill') +
+  ggtitle('Depression by Degree') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Family History of Mental Illness vs Depression
+p6<-ggplot(data, aes(x = factor(data$`Family History of Mental Illness`), fill = factor(Depression))) +
+  geom_bar(position = 'fill') +
+  ggtitle('Depression by Family History of Mental Illness')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Proportion of Suicidal Thoughts by City
+#data$Have.you.ever.had.suicidal.thoughts.. <- as.factor(data$Have.you.ever.had.suicidal.thoughts..)
+p7<-ggplot(data, aes(x = City, fill = factor(data$`Have you ever had suicidal thoughts ?`))) +
+  geom_bar(position = 'fill') +
+  ggtitle('Proportion of Suicidal Thoughts by City') +
+  scale_fill_manual(values = c("No" = "#E6D617", "Yes" = "#AE58EB")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Depression vs Acdemic Pressure
+p8<-ggplot(data, aes(x = factor(data$`Academic Pressure`), fill = factor(Depression))) +
+  geom_bar(position = 'fill') +
+  ggtitle('Proportion of Depression by Academic Pressure') +
+  xlab('Academic Pressure') +
+  ylab('Proportion')
+```
+
+```{r,warning=FALSE,fig.width=6, fig.height=4,include=FALSE}
+# Distribution Comparisons - Study Satisfaction by Gender
+p9<-ggplot(data, aes(x = factor(data$`Study Satisfaction`), fill = Gender)) +
+  geom_bar(position = 'dodge') +
+  ggtitle('Study Satisfaction by Gender')
+```
+
+### Distribution of Age
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+p1
+```
+
+### Distribution of CGPA
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+p2
+```
+
+### CGPA vs Academic Pressure
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+p3
+```
+
+There is an inverse relationship between academic pressure and CGPA. The clustering seen in this graph suggests that there is a tipping point where stress transitions from being motivating and helping performance to debilitating and hindering performance.
+
+### Depression by Degree
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+# Correlation Matrix
+numeric_cols <- sapply(data, is.numeric)
+cor_matrix <- cor(data[, numeric_cols], use = 'complete.obs')
+corrplot(cor_matrix, method = 'circle', type = 'upper')
+
+p5
+```
+
+Professional degree students show elevated depression rates. Humanities students show lower rates of depression.
+
+### Family History of Mental Illness vs Depression
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+p6
+```
+
+Students with family mental health history show three times higher depression rates than the peers without family mental health history. This effect is consistent across all CGPA quartiles.
+
+### Proportion of Suicidal Thoughts by City
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+p7
+```
+
+Urban students reported higher suicidal ideation than non-urban peers. Over two thirds of suicidal ideation cases cluster within the highest academic pressure group.
+
+### Depression vs Acdemic Pressure
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+p8
+```
+
+Depression risk doubles when academic pressure exceeds 4-5. This shows a “breaking point” pattern that was discussed previously.
+
+### Distribution Comparisons - Study Satisfaction by Gender
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+p9
+```
+
+For each satisfaction level the count of male students is consistently higher than the female students. There are no satisfaction level where females outnumber males.
+
+### Skewness and Kurtosis
+```{r,warning=FALSE,fig.width=7, fig.height=3}
+age_skewness <- skewness(data$Age, na.rm = TRUE)
+age_kurtosis <- kurtosis(data$Age, na.rm = TRUE)
+cgpa_skewness <- skewness(data$CGPA, na.rm = TRUE)
+cgpa_kurtosis <- kurtosis(data$CGPA, na.rm = TRUE)
+age_skewness
+age_kurtosis
+cgpa_skewness
+cgpa_kurtosis
+```
+
+Age skewness is .13 indicating that the age distribution is nearly symmetrical. A negative Kurtosis value suggests the age distribution is flatter than a normal distribution, there are fewer extreme values and the data is more spread out.
+CGPA Skewness is -.11. This indicates that the CGPA distribution is nearly symmetric with a slight tendency for more values to be on the higher end. The Kurtosis value -1.02 indicates the CGPA distribution is flatter than a normal distribution.
+
